@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Result Processing System</title>
+<style>
+body { margin:0; font-family: Arial; }
+.page { display:none; min-height:100vh; }
+.active { display:block; }
+button { cursor:pointer; border:none; border-radius:10px; padding:10px 20px; color:white; font-size:16px; transition:0.3s; }
+button:hover { opacity:0.85; }
+input { width:100%; padding:10px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
+.form-overlay { background: rgba(255,255,255,0.95); padding:25px; border-radius:12px; width:90%; max-width:600px; margin:auto; }
+
+/* Login Page */
+#loginPage { background: url("https://images.unsplash.com/photo-1510070009289-b5bc34383727") no-repeat center center/cover; text-align:center; color:white; padding-top:120px; }
+#loginPage .form-overlay { background: rgba(0,0,0,0.7); padding:30px; display:inline-block; }
+#loginPage button { background:#00c6ff; }
+
+/* Home Page */
+#home { background: url("https://images.unsplash.com/photo-1524995997946-a1c2e315a42f") no-repeat center center/cover; text-align:center; color:white; padding-top:120px; }
+#home button { background:#00c6ff; margin:10px; }
+
+/* Form Page */
+#formPage { background: url("https://images.unsplash.com/photo-1529070538774-1843cb3265df") no-repeat center center/cover; padding:50px 20px; }
+#formPage button { background:#185a9d; margin-top:5px; width:100%; }
+
+/* Database Page */
+#dbPage { background: url("https://images.unsplash.com/photo-1516979187457-637abb4f9353") no-repeat center center/cover; padding:30px 20px; }
+#dbPage table { width:100%; border-collapse: collapse; margin-top:10px; }
+#dbPage th, #dbPage td { border:1px solid #333; padding:8px; text-align:center; }
+#dbPage th { background:#667eea; color:white; cursor:pointer; }
+.pass { color:green; font-weight:bold; }
+.fail { color:red; font-weight:bold; }
+.nav-btn { margin-top:8px; background:#00c6ff; width:48%; margin-right:2%; }
+.nav-btn:last-child { margin-right:0; }
+
+/* Modal */
+.modal { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background: rgba(0,0,0,0.7); }
+.modal-content { background:white; margin:10% auto; padding:20px; border-radius:10px; width:90%; max-width:400px; }
+.close { float:right; cursor:pointer; font-size:20px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="page active" id="loginPage">
+  <div class="form-overlay">
+    <h2>Admin Login</h2>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="loginError" class="fail"></p>
+  </div>
+</div>
+
+<!-- HOME PAGE -->
+<div class="page" id="home">
+  <h1>Student Result Processing System</h1>
+  <button onclick="showPage('formPage')">🎓 Add Student</button>
+  <button onclick="showPage('dbPage')">📂 View Database</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<!-- FORM PAGE -->
+<div class="page" id="formPage">
+  <div class="form-overlay">
+    <h2 id="formTitle">Student Details Entry</h2>
+    <input type="hidden" id="studentIndex">
+    <input id="name" placeholder="Student Name">
+    <input id="srn" placeholder="SRN">
+    <input id="email" type="email" placeholder="Email ID">
+    <input id="s1" type="number" placeholder="Subject 1 Marks" min="0" max="100" oninput="calculateLive()">
+    <input id="s2" type="number" placeholder="Subject 2 Marks" min="0" max="100" oninput="calculateLive()">
+    <input id="s3" type="number" placeholder="Subject 3 Marks" min="0" max="100" oninput="calculateLive()">
+    <p id="liveResult"></p>
+    <button id="submitBtn" onclick="saveStudent()">Submit</button>
+    <div style="margin-top:10px;">
+      <button class="nav-btn" onclick="showPage('dbPage')">View Database</button>
+      <button class="nav-btn" onclick="showPage('home')">Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- DATABASE PAGE -->
+<div class="page" id="dbPage">
+  <div class="form-overlay">
+    <h2>Student Database</h2>
+    <input id="searchSRN" placeholder="Search by Name, SRN, or Email" onkeyup="renderTable()">
+    <div style="margin-top:10px;">
+      <strong>Analytics:</strong>
+      <p id="analytics"></p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortTable('name')">Name</th>
+          <th onclick="sortTable('srn')">SRN</th>
+          <th onclick="sortTable('email')">Email</th>
+          <th onclick="sortTable('s1')">S1</th>
+          <th onclick="sortTable('s2')">S2</th>
+          <th onclick="sortTable('s3')">S3</th>
+          <th onclick="sortTable('percentage')">%</th>
+          <th onclick="sortTable('grade')">Grade</th>
+          <th onclick="sortTable('result')">Result</th>
+        </tr>
+      </thead>
+      <tbody id="dbTable"></tbody>
+    </table>
+    <div style="margin-top:10px;">
+      <button class="nav-btn" onclick="showPage('formPage')">Back</button>
+      <button class="nav-btn" onclick="showPage('home')">Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT MODAL -->
+<div id="studentModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+let isLoggedIn=false;
+let editIndex=null;
+let sortAsc=true;
+let sortKey='';
+
+function login(){
+  const u=document.getElementById("username").value.trim();
+  const p=document.getElementById("password").value.trim();
+  if(u==="admin" && p==="admin123"){ 
+    isLoggedIn=true;
+    document.getElementById("loginError").innerText="";
+    showPage('home');
+  } else {
+    document.getElementById("loginError").innerText="Invalid Username or Password";
+  }
+}
+
+function logout(){ location.reload(); }
+
+function showPage(id){
+  if(!isLoggedIn && id!=="loginPage"){ alert("Please login first"); return; }
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if(id==='dbPage') renderTable();
+}
+
+// FORM FUNCTIONS
+function calculateLive(){
+  const s1=+document.getElementById("s1").value||0;
+  const s2=+document.getElementById("s2").value||0;
+  const s3=+document.getElementById("s3").value||0;
+  const percentage=(s1+s2+s3)/3;
+  let grade=percentage>=90?"A":percentage>=75?"B":percentage>=60?"C":percentage>=40?"D":"F";
+  let result=percentage>=40?"PASS":"FAIL";
+  document.getElementById("liveResult").innerHTML=`%: ${percentage.toFixed(2)}, Grade: ${grade}, Result: <span class="${result==='PASS'?'pass':'fail'}">${result}</span>`;
+}
+
+function saveStudent(){
+  const name=document.getElementById("name").value.trim();
+  const srn=document.getElementById("srn").value.trim();
+  const email=document.getElementById("email").value.trim();
+  const s1=+document.getElementById("s1").value;
+  const s2=+document.getElementById("s2").value;
+  const s3=+document.getElementById("s3").value;
+  if(!name||!srn||!email||[s1,s2,s3].some(m=>isNaN(m)||m<0||m>100)){ alert("Fill all fields correctly"); return; }
+
+  let students=JSON.parse(localStorage.getItem("students"))||[];
+  if(editIndex===null && students.some(s=>s.srn===srn)){ alert("SRN already exists"); return; }
+
+  const percentage=(s1+s2+s3)/3;
+  const grade=percentage>=90?"A":percentage>=75?"B":percentage>=60?"C":percentage>=40?"D":"F";
+  const result=percentage>=40?"PASS":"FAIL";
+
+  const student={name,srn,email,s1,s2,s3,percentage,grade,result};
+  if(editIndex===null) students.push(student);
+  else { students[editIndex]=student; editIndex=null; document.getElementById("submitBtn").innerText="Submit"; document.getElementById("formTitle").innerText="Student Details Entry"; }
+
+  localStorage.setItem("students",JSON.stringify(students));
+  clearForm();
+  renderTable();
+  showPage('dbPage');
+}
+
+// DATABASE FUNCTIONS
+function renderTable(){
+  let students=JSON.parse(localStorage.getItem("students"))||[];
+  const search=document.getElementById("searchSRN").value.trim().toLowerCase();
+  if(search) students=students.filter(s=>s.name.toLowerCase().includes(search)||s.srn.toLowerCase().includes(search)||s.email.toLowerCase().includes(search));
+  if(sortKey) students.sort((a,b)=>sortAsc?a[sortKey]>b[sortKey]?1:-1:a[sortKey]<b[sortKey]?1:-1);
+
+  const table=document.getElementById("dbTable");
+  table.innerHTML="";
+  students.forEach((s,index)=>{
+    table.innerHTML+=`<tr onclick="showModal(${index})">
+      <td>${s.name}</td><td>${s.srn}</td><td>${s.email}</td>
+      <td>${s.s1}</td><td>${s.s2}</td><td>${s.s3}</td>
+      <td>${s.percentage.toFixed(2)}</td><td>${s.grade}</td>
+      <td class="${s.result==='PASS'?'pass':'fail'}">${s.result}</td>
+    </tr>`;
+  });
+  renderAnalytics();
+}
+
+// SORT
+function sortTable(key){ sortAsc=(sortKey===key)?!sortAsc:true; sortKey=key; renderTable(); }
+
+// MODAL
+function showModal(index){
+  const students=JSON.parse(localStorage.getItem("students"))||[];
+  const s=students[index];
+  document.getElementById("modalContent").innerHTML=`<h3>${s.name}</h3>
+    <p>SRN: ${s.srn}</p>
+    <p>Email: ${s.email}</p>
+    <p>Marks: ${s.s1}, ${s.s2}, ${s.s3}</p>
+    <p>%: ${s.percentage.toFixed(2)}</p>
+    <p>Grade: ${s.grade}</p>
+    <p class="${s.result==='PASS'?'pass':'fail'}">Result: ${s.result}</p>`;
+  document.getElementById("studentModal").style.display="block";
+}
+
+function closeModal(){ document.getElementById("studentModal").style.display="none"; }
+
+// ANALYTICS
+function renderAnalytics(){
+  const students = JSON.parse(localStorage.getItem("students")) || [];
+  if(students.length===0){ document.getElementById("analytics").innerText="No data available"; return; }
+
+  const top=Math.max(...students.map(s=>s.percentage)).toFixed(2);
+  const low=Math.min(...students.map(s=>s.percentage)).toFixed(2);
+  const avg=(students.reduce((a,b)=>a+b.percentage,0)/students.length).toFixed(2);
+
+  document.getElementById("analytics").innerText=`Top: ${top}%, Lowest: ${low}%, Class Average: ${avg}%`;
+}
+
+// CLEAR FORM
+function clearForm(){ document.getElementById("name").value=""; document.getElementById("srn").value=""; document.getElementById("email").value=""; document.getElementById("s1").value=""; document.getElementById("s2").value=""; document.getElementById("s3").value=""; document.getElementById("liveResult").innerHTML=""; }
+</script>
+</body>
+</html>
