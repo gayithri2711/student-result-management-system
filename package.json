@@ -1,0 +1,14 @@
+{
+  "name": "student-result-processing-system",
+  "version": "1.0.0",
+  "description": "Student Result Processing System Backend Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Student",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
