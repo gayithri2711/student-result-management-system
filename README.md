@@ -1,29 +1,35 @@
-# student-result-management-system
-“A web-based application to manage and generate student results efficiently.”
-# Student Result Processing System
+# 🎓 Student Result Management System (Java GUI)
 
-## 📘 Project Overview
-The **Student Result Processing System** is a web-based mini project designed to manage and process student academic results.  
-It allows an administrator to log in, add student details and marks, automatically calculate percentage, grade, and pass/fail status, and view all records in a searchable and sortable database.
+## 📌 Project Overview
+The Student Result Management System is a Java-based mini project developed using Java Swing (GUI).  
+It allows users to enter student details and marks, calculates total, average, and grade, and displays the result through a user-friendly graphical interface.
 
-All data is stored locally in the browser using **LocalStorage**.
+This project is developed as part of a college Java mini project and is executed locally using a Java IDE.
 
 ---
 
-## 🛠 Technologies Used
+## 🖥️ Features
+- GUI-based application using Java Swing
+- Enter student roll number and name
+- Input marks for three subjects
+- Automatic calculation of:
+  - Total marks
+  - Average
+  - Grade
+- Clear/reset functionality
 
-### Frontend
-- HTML5
-- CSS3
-- JavaScript (Vanilla JS)
+---
+frontend:
+HTML
+CSS
+Javascript
 
-### Backend (Optional / Demonstration)
-- Node.js
-- Express.js
-
-> ⚠️ Note:  
-> The main project logic runs on the frontend using JavaScript.  
-> The backend server is used only to serve files and demonstrate backend concepts.
+## 🛠️ Technologies Used
+- Java
+- Java Swing (GUI)
+- AWT Event Handling
+- Object-Oriented Programming (OOP)
+- GitHub for version control
 
 ---
 
