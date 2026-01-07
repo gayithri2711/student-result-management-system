@@ -16,10 +16,11 @@ public class LoginServlet extends HttpServlet{
         String user = request.getParameter("userid");
         String pass = request.getParameter("password");
 
-        if (user.equals("purna27") && pass.equals("passme!23")) {
+        if (user.equals("admin") && pass.equals("admin123")) {
             response.sendRedirect("home.jsp");
         } else {
             response.getWriter().println("Invalid login credentials");
         }
     }
 }
+
